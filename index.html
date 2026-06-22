@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Crypto Profit Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0D13;
+    --surface: #12161F;
+    --surface-hi: #1A1F2C;
+    --border: #232936;
+    --amber: #F0B90B;
+    --amber-soft: #F0B90B1A;
+    --teal: #00D4AA;
+    --text: #E8EAED;
+    --text-muted: #8B92A6;
+  }
+  body { background: var(--bg); font-family: 'Inter', sans-serif; }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+  .grid-glow {
+    background-image:
+      linear-gradient(to right, #ffffff08 1px, transparent 1px),
+      linear-gradient(to bottom, #ffffff08 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%);
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 75%);
+  }
+
+  .glow-amber {
+    box-shadow: 0 0 0 1px var(--amber-soft), 0 8px 32px -8px #F0B90B40;
+  }
+
+  .ticker-pulse {
+    animation: pulseGlow 2.8s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.65; }
+  }
+
+  .nav-link {
+    position: relative;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+  }
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: -4px;
+    width: 0%; height: 1px;
+    background: var(--amber);
+    transition: width 0.25s ease;
+  }
+  .nav-link:hover { color: var(--text); }
+  .nav-link:hover::after { width: 100%; }
+
+  .btn-primary {
+    background: var(--amber);
+    color: #15130A;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px -8px #F0B90B66;
+  }
+
+  .btn-ghost {
+    border: 1px solid var(--border);
+    color: var(--text);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .btn-ghost:hover {
+    border-color: #3A4254;
+    background: var(--surface-hi);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-pulse { animation: none; }
+  }
+
+  /* Calculator card glow */
+  .calc-card {
+    box-shadow:
+      0 0 0 1px #ffffff05,
+      0 30px 60px -20px #000000B3,
+      0 0 80px -20px #F0B90B1F;
+  }
+  .calc-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #F0B90B4D, transparent 30%, transparent 70%, #00D4AA33);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Input focus glow */
+  .input-shell:focus-within {
+    border-color: #F0B90B66;
+    box-shadow: 0 0 0 3px #F0B90B14;
+  }
+
+  /* Results dashboard */
+  .stat-tile {
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .stat-tile:hover {
+    border-color: #3A4254;
+    transform: translateY(-2px);
+  }
+
+  .net-profit-banner {
+    background:
+      linear-gradient(135deg, #00D4AA14, transparent 60%),
+      var(--surface-hi);
+  }
+  .net-profit-banner.is-loss {
+    background:
+      linear-gradient(135deg, #FF5C5C14, transparent 60%),
+      var(--surface-hi);
+  }
+
+  /* Validation shake */
+  .input-shell.has-error {
+    border-color: #FF5C5C99 !important;
+    box-shadow: 0 0 0 3px #FF5C5C14;
+  }
+  .shake {
+    animation: shakeError 0.4s ease;
+  }
+  @keyframes shakeError {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+  }
+
+  /* Screen-reader only */
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Dashboard refresh flash */
+  .calc-card.just-updated {
+    animation: cardFlash 0.7s ease;
+  }
+  @keyframes cardFlash {
+    0% { box-shadow: 0 0 0 1px #ffffff05, 0 30px 60px -20px #000000B3, 0 0 0 0 #00D4AA00; }
+    30% { box-shadow: 0 0 0 1px #ffffff05, 0 30px 60px -20px #000000B3, 0 0 60px -10px #00D4AA40; }
+    100% { box-shadow: 0 0 0 1px #ffffff05, 0 30px 60px -20px #000000B3, 0 0 80px -20px #F0B90B1F; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shake, .calc-card.just-updated { animation: none; }
+  }
+
+  /* Coin selector dropdown */
+  .coin-select-shell {
+    position: relative;
+  }
+  .coin-select-shell select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 0.875rem 3rem 0.875rem 3.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+  }
+  .coin-select-shell select:focus {
+    border-color: #F0B90B66;
+    box-shadow: 0 0 0 3px #F0B90B14;
+  }
+  .coin-select-shell select option {
+    background: #12161F;
+    color: var(--text);
+    padding: 8px;
+  }
+  .coin-select-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .coin-select-chevron {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-muted);
+  }
+
+  /* API status pill */
+  .api-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    transition: all 0.3s ease;
+  }
+  .api-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .api-status.status-idle { color: var(--text-muted); }
+  .api-status.status-idle .api-status-dot { background: var(--text-muted); }
+
+  .api-status.status-fetching { color: var(--amber); }
+  .api-status.status-fetching .api-status-dot {
+    background: var(--amber);
+    animation: pulseGlow 1s ease-in-out infinite;
+  }
+
+  .api-status.status-success { color: var(--teal); }
+  .api-status.status-success .api-status-dot { background: var(--teal); }
+
+  .api-status.status-error { color: #FF5C5C; }
+  .api-status.status-error .api-status-dot { background: #FF5C5C; }
+
+  /* Buy price field highlight when auto-filled */
+  .buy-price-autofilled {
+    border-color: #00D4AA66 !important;
+    box-shadow: 0 0 0 3px #00D4AA14 !important;
+  }
+  @keyframes fadeHighlight {
+    0% { border-color: #00D4AA99; box-shadow: 0 0 0 4px #00D4AA22; }
+    100% { border-color: #F0B90B66; box-shadow: 0 0 0 3px #F0B90B14; }
+  }
+
+  /* ---- Currency Toggle ---- */
+  .currency-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+  }
+  .currency-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 4px 9px;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-muted);
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    white-space: nowrap;
+  }
+  .currency-btn:hover:not(.active) {
+    color: var(--text);
+    background: var(--surface-hi);
+  }
+  .currency-btn.active {
+    background: var(--surface-hi);
+    color: var(--amber);
+    box-shadow: 0 0 0 1px #F0B90B33;
+  }
+
+  /* Flash output tiles when currency changes */
+  @keyframes currencySwap {
+    0%   { opacity: 0.35; transform: translateY(3px); }
+    100% { opacity: 1;    transform: translateY(0);   }
+  }
+  .currency-swap-flash {
+    animation: currencySwap 0.28s ease forwards;
+  }
+  /* ---- Download PDF Button ---- */
+  .btn-pdf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-hi);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-pdf::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #00D4AA0A, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .btn-pdf:hover {
+    border-color: #00D4AA55;
+    box-shadow: 0 0 0 3px #00D4AA0F, 0 8px 20px -8px #00000060;
+    transform: translateY(-1px);
+  }
+  .btn-pdf:hover::before { opacity: 1; }
+  .btn-pdf:active { transform: translateY(0); }
+  .btn-pdf:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-pdf .pdf-icon { color: #00D4AA; flex-shrink: 0; }
+  .btn-pdf .pdf-label { position: relative; }
+  .btn-pdf .pdf-spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid #00D4AA33;
+    border-top-color: #00D4AA;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-pdf.is-generating .pdf-icon { display: none; }
+  .btn-pdf.is-generating .pdf-spinner { display: block; }
+  .btn-pdf.is-generating .pdf-label { opacity: 0.7; }
+</style>
+</head>
+<body class="min-h-screen text-[var(--text)] antialiased">
+
+  <!-- NAVBAR -->
+  <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[#0A0D13]/80 backdrop-blur-md">
+    <nav class="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
+
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 group">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="28" height="28" rx="7" fill="#F0B90B" fill-opacity="0.12"/>
+          <path d="M8 18.5L13 9.5L17 16L20 9.5" stroke="#F0B90B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="20" cy="9.5" r="1.6" fill="#F0B90B"/>
+        </svg>
+        <span class="font-display font-semibold text-[17px] tracking-tight">
+          Gainwise<span class="text-[var(--amber)]">.</span>
+        </span>
+      </a>
+
+      <!-- Links -->
+      <div class="hidden md:flex items-center gap-9 font-mono text-[13px] tracking-wide uppercase">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#faq" class="nav-link">FAQ</a>
+      </div>
+
+      <!-- CTA -->
+      <div class="flex items-center gap-3">
+        <a href="#calculator" class="hidden sm:inline-flex btn-primary font-medium text-sm px-4 py-2 rounded-lg">
+          Launch Calculator
+        </a>
+        <button class="md:hidden p-2 text-[var(--text-muted)]" aria-label="Open menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="relative overflow-hidden">
+    <div class="absolute inset-0 grid-glow pointer-events-none"></div>
+    <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#F0B90B0F] blur-3xl rounded-full pointer-events-none"></div>
+
+    <div class="relative max-w-5xl mx-auto px-6 lg:px-8 pt-20 pb-24 lg:pt-28 lg:pb-32 flex flex-col items-center text-center">
+
+      <!-- Signature ticker badge -->
+      <div class="ticker-pulse inline-flex items-center gap-2.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-4 py-1.5 mb-8">
+        <span class="w-1.5 h-1.5 rounded-full bg-[var(--teal)]"></span>
+        <span class="font-mono text-xs text-[var(--text-muted)]">
+          $12,480.00 <span class="text-[var(--text)] mx-1">&rarr;</span> <span class="text-[var(--teal)]">$58,210.91</span>
+        </span>
+        <span class="font-mono text-xs font-medium text-[var(--teal)]">+366.4%</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="font-display font-semibold text-[2.5rem] leading-[1.08] sm:text-6xl lg:text-[4.25rem] tracking-tight max-w-3xl">
+        Calculate Your
+        <span class="relative inline-block px-1">
+          <span class="relative z-10">Crypto Gains</span>
+          <span class="absolute left-0 right-0 bottom-2 h-3 bg-[var(--amber)] opacity-20 -rotate-1 z-0"></span>
+        </span>
+        Instantly
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="mt-6 text-lg text-[var(--text-muted)] max-w-xl leading-relaxed">
+        Enter your entry price, exit price, and position size to see exact profit, ROI, and tax-ready breakdowns — across every major coin, in seconds.
+      </p>
+
+      <!-- CTAs -->
+      <div class="mt-10 flex flex-col sm:flex-row items-center gap-4">
+        <a href="#calculator" class="btn-primary glow-amber font-semibold text-[15px] px-7 py-3.5 rounded-xl">
+          Start Calculating — It's Free
+        </a>
+        <a href="#how-it-works" class="btn-ghost font-medium text-[15px] px-7 py-3.5 rounded-xl">
+          See How It Works
+        </a>
+      </div>
+
+      <!-- Trust strip -->
+      <div class="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 font-mono text-xs text-[var(--text-muted)] uppercase tracking-wider">
+        <span>No Signup Required</span>
+        <span class="w-1 h-1 rounded-full bg-[var(--border)] hidden sm:block"></span>
+        <span>50+ Supported Assets</span>
+        <span class="w-1 h-1 rounded-full bg-[var(--border)] hidden sm:block"></span>
+        <span>Real-Time Price Feed</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section id="calculator" class="relative px-6 lg:px-8 pb-28 lg:pb-36">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+
+      <!-- Form Card -->
+      <div class="calc-card relative rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-7 sm:p-9">
+
+        <!-- Card header -->
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <span class="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--amber)]">Profit Calculator</span>
+            <h2 class="font-display font-semibold text-2xl mt-1.5">Run the Numbers</h2>
+          </div>
+          <div class="hidden sm:flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-hi)] px-3 py-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-[var(--teal)] ticker-pulse"></span>
+            <span class="font-mono text-[11px] text-[var(--text-muted)]">Live Mode</span>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form id="profitForm" class="space-y-5" novalidate>
+
+          <!-- Coin Selector -->
+          <div>
+            <label class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-[var(--text)]">Select Coin</span>
+              <span id="apiStatus" class="api-status status-idle">
+                <span class="api-status-dot"></span>
+                <span id="apiStatusText">Select a coin to fetch price</span>
+              </span>
+            </label>
+            <div class="coin-select-shell">
+              <span class="coin-select-icon" id="coinEmoji">🪙</span>
+              <select id="coinSelector" aria-label="Select cryptocurrency to auto-fill buy price">
+                <option value="">— Choose a coin —</option>
+                <option value="bitcoin" data-symbol="BTC" data-emoji="₿">Bitcoin (BTC)</option>
+                <option value="ethereum" data-symbol="ETH" data-emoji="Ξ">Ethereum (ETH)</option>
+                <option value="solana" data-symbol="SOL" data-emoji="◎">Solana (SOL)</option>
+                <option value="ripple" data-symbol="XRP" data-emoji="✕">Ripple (XRP)</option>
+                <option value="cardano" data-symbol="ADA" data-emoji="₳">Cardano (ADA)</option>
+              </select>
+              <svg class="coin-select-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Investment Amount -->
+          <div>
+            <label for="investment" class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-[var(--text)]">Investment Amount</span>
+              <span id="investmentCurrencyLabel" class="font-mono text-[11px] text-[var(--text-muted)]">USD</span>
+            </label>
+            <div id="investmentShell" class="input-shell flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 transition-colors">
+              <span id="investmentSymbol" class="font-mono text-[var(--text-muted)] mr-2">$</span>
+              <input
+                type="number"
+                id="investment"
+                name="investment"
+                step="any"
+                placeholder="1,000.00"
+                class="w-full bg-transparent py-3.5 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-muted)]/50 outline-none"
+              />
+            </div>
+            <p id="investmentError" class="hidden font-mono text-[11px] text-[#FF5C5C] mt-1.5"></p>
+          </div>
+
+          <!-- Buy / Sell Price -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="buyPrice" class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-[var(--text)]">Buy Price</span>
+              </label>
+              <div id="buyPriceShell" class="input-shell flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 transition-colors">
+                <span id="buyPriceSymbol" class="font-mono text-[var(--text-muted)] mr-2">$</span>
+                <input
+                  type="number"
+                  id="buyPrice"
+                  name="buyPrice"
+                  step="any"
+                  placeholder="0.00"
+                  class="w-full bg-transparent py-3.5 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-muted)]/50 outline-none min-w-0"
+                />
+              </div>
+              <p id="buyPriceError" class="hidden font-mono text-[11px] text-[#FF5C5C] mt-1.5"></p>
+            </div>
+
+            <div>
+              <label for="sellPrice" class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-[var(--text)]">Sell Price</span>
+              </label>
+              <div id="sellPriceShell" class="input-shell flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 transition-colors">
+                <span id="sellPriceSymbol" class="font-mono text-[var(--text-muted)] mr-2">$</span>
+                <input
+                  type="number"
+                  id="sellPrice"
+                  name="sellPrice"
+                  step="any"
+                  placeholder="0.00"
+                  class="w-full bg-transparent py-3.5 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-muted)]/50 outline-none min-w-0"
+                />
+              </div>
+              <p id="sellPriceError" class="hidden font-mono text-[11px] text-[#FF5C5C] mt-1.5"></p>
+            </div>
+          </div>
+
+          <!-- Tax Rate -->
+          <div>
+            <label for="taxRate" class="flex items-center justify-between mb-2">
+              <span class="text-sm font-medium text-[var(--text)]">Crypto Tax Rate</span>
+              <span class="font-mono text-[11px] text-[var(--text-muted)]">Optional</span>
+            </label>
+            <div id="taxRateShell" class="input-shell flex items-center rounded-xl border border-[var(--border)] bg-[var(--bg)] px-4 transition-colors">
+              <input
+                type="number"
+                id="taxRate"
+                name="taxRate"
+                step="any"
+                placeholder="0.00"
+                class="w-full bg-transparent py-3.5 font-mono text-[15px] text-[var(--text)] placeholder:text-[var(--text-muted)]/50 outline-none min-w-0"
+              />
+              <span class="font-mono text-[var(--text-muted)] ml-2">%</span>
+            </div>
+            <p id="taxRateError" class="hidden font-mono text-[11px] text-[#FF5C5C] mt-1.5"></p>
+          </div>
+
+          <!-- Submit -->
+          <button
+            type="submit"
+            id="calculateBtn"
+            class="btn-primary glow-amber w-full font-display font-semibold text-[16px] py-4 rounded-xl mt-2 flex items-center justify-center gap-2"
+          >
+            <span id="btnLabel">Calculate Profit</span>
+            <svg id="btnArrowIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+            <svg id="btnSpinnerIcon" class="hidden animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="9" stroke-opacity="0.25"/>
+              <path d="M21 12a9 9 0 0 0-9-9"/>
+            </svg>
+          </button>
+
+          <p class="text-center font-mono text-[11px] text-[var(--text-muted)] pt-1">
+            Estimates only — not financial or tax advice.
+          </p>
+
+          <div id="srAnnouncement" class="sr-only" aria-live="polite"></div>
+
+        </form>
+      </div>
+
+      <!-- Results Dashboard Card -->
+      <div class="calc-card relative rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-7 sm:p-9">
+
+        <!-- Card header -->
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <span class="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--teal)]">Results Dashboard</span>
+            <h2 class="font-display font-semibold text-2xl mt-1.5">Your Breakdown</h2>
+          </div>
+          <div class="flex flex-col items-end gap-2">
+            <!-- Currency Toggle -->
+            <div class="currency-toggle" role="group" aria-label="Select currency">
+              <button type="button" class="currency-btn active" data-currency="USD">$ USD</button>
+              <button type="button" class="currency-btn" data-currency="INR">₹ INR</button>
+              <button type="button" class="currency-btn" data-currency="EUR">€ EUR</button>
+              <button type="button" class="currency-btn" data-currency="GBP">£ GBP</button>
+            </div>
+            <div id="dashboardBadge" class="flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface-hi)] px-3 py-1.5">
+              <span id="dashboardBadgeDot" class="w-1.5 h-1.5 rounded-full bg-[var(--text-muted)]"></span>
+              <span id="dashboardBadgeText" class="font-mono text-[11px] text-[var(--text-muted)]">Preview</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metric tiles -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+
+          <!-- Total Investment -->
+          <div class="stat-tile rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
+            <div class="w-8 h-8 rounded-lg bg-[var(--surface-hi)] flex items-center justify-center mb-3">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B92A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="13" rx="2"/>
+                <path d="M2 10h20"/>
+                <path d="M6 14h4"/>
+              </svg>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mb-1.5">Total Investment</p>
+            <p id="totalInvestmentOutput" class="font-mono font-semibold text-lg text-[var(--text)]">$10,000.00</p>
+          </div>
+
+          <!-- Gross Profit/Loss -->
+          <div class="stat-tile rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
+            <div id="grossProfitIconWrap" class="w-8 h-8 rounded-lg bg-[#00D4AA1A] flex items-center justify-center mb-3">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00D4AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                <polyline points="17 6 23 6 23 12"/>
+              </svg>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mb-1.5">Gross Profit / Loss</p>
+            <p id="grossProfitOutput" class="font-mono font-semibold text-lg text-[var(--teal)]">+$24,350.00</p>
+          </div>
+
+          <!-- Tax Owed -->
+          <div class="stat-tile rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-4">
+            <div class="w-8 h-8 rounded-lg bg-[#F0B90B1A] flex items-center justify-center mb-3">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F0B90B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="13" y2="17"/>
+              </svg>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mb-1.5">Tax Owed</p>
+            <p id="taxOwedOutput" class="font-mono font-semibold text-lg text-[var(--amber)]">$3,652.50</p>
+          </div>
+
+        </div>
+
+        <!-- Net Profit banner -->
+        <div id="netProfitBanner" class="net-profit-banner relative overflow-hidden rounded-2xl border border-[var(--border)] mt-3.5 p-5 sm:p-6 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5">
+            <div id="netProfitIconWrap" class="w-11 h-11 shrink-0 rounded-xl bg-[#00D4AA1F] flex items-center justify-center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00D4AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M9 12.5l2 2 4-4.5"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs text-[var(--text-muted)] mb-1">Net Profit After Tax</p>
+              <p id="netProfitOutput" class="font-display font-semibold text-2xl sm:text-[1.75rem] text-[var(--text)]">$20,697.50</p>
+            </div>
+          </div>
+          <span id="roiBadge" class="font-mono text-xs font-medium text-[var(--teal)] bg-[#00D4AA14] border border-[#00D4AA33] rounded-full px-2.5 py-1 whitespace-nowrap">
+            +186.4% ROI
+          </span>
+        </div>
+
+        <p id="dashboardFooterNote" class="text-center font-mono text-[11px] text-[var(--text-muted)] pt-5">
+          Sample figures shown — connect the calculator to see your real results.
+        </p>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 mt-5">
+          <div class="flex-1 h-px bg-[var(--border)]"></div>
+          <span class="font-mono text-[10px] text-[var(--text-muted)] uppercase tracking-widest">Export</span>
+          <div class="flex-1 h-px bg-[var(--border)]"></div>
+        </div>
+
+        <!-- Download PDF Button -->
+        <button
+          id="downloadPdfBtn"
+          type="button"
+          class="btn-pdf mt-4"
+          title="Download a professional PDF report of your calculation"
+        >
+          <svg class="pdf-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="12" x2="12" y2="18"/>
+            <polyline points="9 15 12 18 15 15"/>
+          </svg>
+          <div class="pdf-spinner"></div>
+          <span class="pdf-label">Download PDF Report</span>
+        </button>
+
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // ---- Element references ----
+    const form = document.getElementById('profitForm');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const btnLabel = document.getElementById('btnLabel');
+    const btnArrowIcon = document.getElementById('btnArrowIcon');
+    const btnSpinnerIcon = document.getElementById('btnSpinnerIcon');
+
+    const fields = {
+      investment: { input: document.getElementById('investment'), shell: document.getElementById('investmentShell'), error: document.getElementById('investmentError') },
+      buyPrice:   { input: document.getElementById('buyPrice'),   shell: document.getElementById('buyPriceShell'),   error: document.getElementById('buyPriceError') },
+      sellPrice:  { input: document.getElementById('sellPrice'),  shell: document.getElementById('sellPriceShell'),  error: document.getElementById('sellPriceError') },
+      taxRate:    { input: document.getElementById('taxRate'),    shell: document.getElementById('taxRateShell'),    error: document.getElementById('taxRateError') }
+    };
+
+    const outputs = {
+      investment: document.getElementById('totalInvestmentOutput'),
+      gross: document.getElementById('grossProfitOutput'),
+      tax: document.getElementById('taxOwedOutput'),
+      net: document.getElementById('netProfitOutput')
+    };
+
+    const grossIconWrap = document.getElementById('grossProfitIconWrap');
+    const netIconWrap = document.getElementById('netProfitIconWrap');
+    const netBanner = document.getElementById('netProfitBanner');
+    const roiBadge = document.getElementById('roiBadge');
+    const dashboardBadge = document.getElementById('dashboardBadge');
+    const dashboardBadgeDot = document.getElementById('dashboardBadgeDot');
+    const dashboardBadgeText = document.getElementById('dashboardBadgeText');
+    const dashboardFooterNote = document.getElementById('dashboardFooterNote');
+    const resultsCard = netBanner.closest('.calc-card');
+    const srAnnouncement = document.getElementById('srAnnouncement');
+
+    // Colors used to recolor icons/badges based on profit vs. loss
+    const COLOR_GREEN = '#00D4AA';
+    const COLOR_RED = '#FF5C5C';
+    const COLOR_GREEN_BG = '#00D4AA1A';
+    const COLOR_RED_BG = '#FF5C5C1A';
+
+    // Icon markup swapped in based on sign
+    const TREND_UP_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + COLOR_GREEN + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
+    const TREND_DOWN_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + COLOR_RED + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>';
+    const CHECK_CIRCLE_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + COLOR_GREEN + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12.5l2 2 4-4.5"/></svg>';
+    const ALERT_CIRCLE_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + COLOR_RED + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="13"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+    // Keeps track of the previously displayed numbers so we can animate FROM them
+    let lastValues = { investment: 10000, gross: 24350, tax: 3652.50, net: 20697.50 };
+    let hasCalculatedOnce = false;
+    let lastResult = null;   // populated after every successful calculation
+
+    // ---- Multi-Currency System ----
+    const CURRENCIES = {
+      USD: { code: 'USD', symbol: '$',  locale: 'en-US', label: 'USD' },
+      INR: { code: 'INR', symbol: '₹',  locale: 'en-IN', label: 'INR' },
+      EUR: { code: 'EUR', symbol: '€',  locale: 'de-DE', label: 'EUR' },
+      GBP: { code: 'GBP', symbol: '£',  locale: 'en-GB', label: 'GBP' },
+    };
+
+    let activeCurrency = CURRENCIES.USD;
+
+    // Build a formatter for the given currency config
+    function makeFormatter(currencyConfig) {
+      return new Intl.NumberFormat(currencyConfig.locale, {
+        style: 'currency',
+        currency: currencyConfig.code,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    // The live formatter — swapped when currency changes
+    let currencyFormatter = makeFormatter(activeCurrency);
+
+    // ---- Formatting helpers ----
+    function formatCurrency(value, signed) {
+      const abs = Math.abs(value);
+      const formatted = currencyFormatter.format(abs);
+      if (!signed) return formatted;
+      return (value < 0 ? '-' : '+') + formatted;
+    }
+
+    // Update all currency symbol spans in the form inputs
+    function updateFormSymbols() {
+      const sym = activeCurrency.symbol;
+      document.getElementById('investmentSymbol').textContent = sym;
+      document.getElementById('buyPriceSymbol').textContent = sym;
+      document.getElementById('sellPriceSymbol').textContent = sym;
+      document.getElementById('investmentCurrencyLabel').textContent = activeCurrency.label;
+    }
+
+    // Re-render dashboard outputs instantly with new currency (no animation — just swap)
+    function flashOutputs() {
+      const targets = [
+        outputs.investment, outputs.gross, outputs.tax, outputs.net
+      ];
+      targets.forEach(function (el) {
+        el.classList.remove('currency-swap-flash');
+        void el.offsetWidth;
+        el.classList.add('currency-swap-flash');
+      });
+      // Re-format current values in new currency
+      outputs.investment.textContent = formatCurrency(lastValues.investment, false);
+      outputs.gross.textContent      = formatCurrency(lastValues.gross, true);
+      outputs.tax.textContent        = formatCurrency(lastValues.tax, false);
+      outputs.net.textContent        = formatCurrency(lastValues.net, true);
+    }
+
+    // ---- Currency toggle wiring ----
+    const currencyBtns = document.querySelectorAll('.currency-btn');
+    currencyBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const code = this.dataset.currency;
+        if (code === activeCurrency.code) return;
+
+        activeCurrency = CURRENCIES[code];
+        currencyFormatter = makeFormatter(activeCurrency);
+
+        // Update active button state
+        currencyBtns.forEach(function (b) { b.classList.remove('active'); });
+        this.classList.add('active');
+
+        // Sync form symbols + label
+        updateFormSymbols();
+
+        // Animate outputs to new format
+        flashOutputs();
+      });
+    });
+
+    // ---- Validation ----
+    function clearError(field) {
+      field.shell.classList.remove('has-error');
+      field.error.classList.add('hidden');
+      field.error.textContent = '';
+    }
+
+    function setError(field, message) {
+      field.shell.classList.add('has-error');
+      field.error.textContent = message;
+      field.error.classList.remove('hidden');
+      field.shell.classList.remove('shake');
+      // restart the shake animation
+      void field.shell.offsetWidth;
+      field.shell.classList.add('shake');
+    }
+
+    function parseField(field) {
+      const raw = field.input.value.trim();
+      if (raw === '') return null;
+      const num = parseFloat(raw);
+      return Number.isFinite(num) ? num : NaN;
+    }
+
+    // Validates all fields, returns parsed values or null if invalid
+    function validate() {
+      Object.values(fields).forEach(clearError);
+      let firstInvalid = null;
+      let valid = true;
+
+      const investment = parseField(fields.investment);
+      if (investment === null || Number.isNaN(investment) || investment <= 0) {
+        setError(fields.investment, investment !== null && Number.isNaN(investment)
+          ? 'Enter a valid number'
+          : 'Investment must be greater than ' + activeCurrency.symbol + '0');
+        firstInvalid = firstInvalid || fields.investment.input;
+        valid = false;
+      }
+
+      const buyPrice = parseField(fields.buyPrice);
+      if (buyPrice === null || Number.isNaN(buyPrice) || buyPrice <= 0) {
+        setError(fields.buyPrice, buyPrice !== null && Number.isNaN(buyPrice)
+          ? 'Enter a valid number'
+          : 'Buy price must be greater than ' + activeCurrency.symbol + '0');
+        firstInvalid = firstInvalid || fields.buyPrice.input;
+        valid = false;
+      }
+
+      const sellPrice = parseField(fields.sellPrice);
+      if (sellPrice === null || Number.isNaN(sellPrice) || sellPrice < 0) {
+        setError(fields.sellPrice, sellPrice !== null && Number.isNaN(sellPrice)
+          ? 'Enter a valid number'
+          : 'Sell price can\'t be negative');
+        firstInvalid = firstInvalid || fields.sellPrice.input;
+        valid = false;
+      }
+
+      // Tax rate is optional — empty defaults to 0
+      const taxRaw = fields.taxRate.input.value.trim();
+      let taxRate = 0;
+      if (taxRaw !== '') {
+        const parsedTax = parseFloat(taxRaw);
+        if (!Number.isFinite(parsedTax) || parsedTax < 0 || parsedTax > 100) {
+          setError(fields.taxRate, 'Tax rate must be between 0 and 100');
+          firstInvalid = firstInvalid || fields.taxRate.input;
+          valid = false;
+        } else {
+          taxRate = parsedTax;
+        }
+      }
+
+      if (!valid) {
+        if (firstInvalid) firstInvalid.focus();
+        return null;
+      }
+
+      return { investment, buyPrice, sellPrice, taxRate };
+    }
+
+    // ---- Calculation ----
+    function calculateResults({ investment, buyPrice, sellPrice, taxRate }) {
+      const units = investment / buyPrice;
+      const saleValue = units * sellPrice;
+      const grossProfit = saleValue - investment;
+      const isProfit = grossProfit >= 0;
+
+      // No tax is owed on a net loss
+      const taxOwed = isProfit ? grossProfit * (taxRate / 100) : 0;
+      const netProfit = grossProfit - taxOwed;
+      const roi = investment > 0 ? (netProfit / investment) * 100 : 0;
+
+      return { investment, grossProfit, taxOwed, netProfit, roi, isProfit };
+    }
+
+    // ---- Animation ----
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function animateNumber(el, from, to, durationMs, signed, onFrame) {
+      const start = performance.now();
+      function step(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const eased = easeOutCubic(progress);
+        const current = from + (to - from) * eased;
+        el.textContent = formatCurrency(current, signed);
+        if (onFrame) onFrame(current);
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ---- Rendering ----
+    function renderResults(result) {
+      const duration = 650;
+
+      // Total investment (neutral)
+      animateNumber(outputs.investment, lastValues.investment, result.investment, duration, false);
+
+      // Gross profit / loss (color + icon swap based on sign)
+      animateNumber(outputs.gross, lastValues.gross, result.grossProfit, duration, true);
+      outputs.gross.style.color = result.isProfit ? COLOR_GREEN : COLOR_RED;
+      grossIconWrap.style.backgroundColor = result.isProfit ? COLOR_GREEN_BG : COLOR_RED_BG;
+      grossIconWrap.innerHTML = result.isProfit ? TREND_UP_SVG : TREND_DOWN_SVG;
+
+      // Tax owed (always neutral/amber — zero on a loss)
+      animateNumber(outputs.tax, lastValues.tax, result.taxOwed, duration, false);
+
+      // Net profit after tax (color + icon + banner swap based on sign)
+      animateNumber(outputs.net, lastValues.net, result.netProfit, duration, true);
+      outputs.net.style.color = result.isProfit ? 'var(--text)' : COLOR_RED;
+      netIconWrap.style.backgroundColor = result.isProfit ? COLOR_GREEN_BG : COLOR_RED_BG;
+      netIconWrap.innerHTML = result.isProfit ? CHECK_CIRCLE_SVG : ALERT_CIRCLE_SVG;
+      netBanner.classList.toggle('is-loss', !result.isProfit);
+
+      // ROI badge
+      const roiSign = result.roi >= 0 ? '+' : '-';
+      roiBadge.textContent = roiSign + Math.abs(result.roi).toFixed(1) + '% ROI';
+      roiBadge.style.color = result.isProfit ? COLOR_GREEN : COLOR_RED;
+      roiBadge.style.backgroundColor = result.isProfit ? '#00D4AA14' : '#FF5C5C14';
+      roiBadge.style.borderColor = result.isProfit ? '#00D4AA33' : '#FF5C5C33';
+
+      // Status badge — flips from "Preview" to a live, color-coded state
+      dashboardBadgeText.textContent = result.isProfit ? 'Profit' : 'Loss';
+      dashboardBadgeDot.style.backgroundColor = result.isProfit ? COLOR_GREEN : COLOR_RED;
+      dashboardBadgeDot.classList.add('ticker-pulse');
+
+      // Footer note updates once real numbers are shown
+      if (!hasCalculatedOnce) {
+        dashboardFooterNote.textContent = 'Estimates based on your inputs — not financial or tax advice.';
+        hasCalculatedOnce = true;
+      }
+
+      // Brief glow flash so the update feels alive
+      resultsCard.classList.remove('just-updated');
+      void resultsCard.offsetWidth;
+      resultsCard.classList.add('just-updated');
+
+      // Announce the headline result to screen readers
+      srAnnouncement.textContent = result.isProfit
+        ? `Net profit after tax: ${formatCurrency(result.netProfit)}`
+        : `Net loss after costs: ${formatCurrency(Math.abs(result.netProfit))}`;
+
+      lastValues = {
+        investment: result.investment,
+        gross: result.grossProfit,
+        tax: result.taxOwed,
+        net: result.netProfit
+      };
+
+      // Persist for PDF export
+      lastResult = result;
+    }
+
+    // ---- Button loading micro-state ----
+    function setLoading(isLoading) {
+      calculateBtn.disabled = isLoading;
+      calculateBtn.classList.toggle('opacity-70', isLoading);
+      calculateBtn.classList.toggle('cursor-not-allowed', isLoading);
+      btnLabel.textContent = isLoading ? 'Calculating…' : 'Calculate Profit';
+      btnArrowIcon.classList.toggle('hidden', isLoading);
+      btnSpinnerIcon.classList.toggle('hidden', !isLoading);
+    }
+
+    // ---- Submit handler ----
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const values = validate();
+      if (!values) return;
+
+      setLoading(true);
+
+      // Small delay makes the update feel deliberate rather than instant/jarring
+      window.setTimeout(function () {
+        const result = calculateResults(values);
+        renderResults(result);
+        setLoading(false);
+      }, 350);
+    });
+
+    // Clear a field's error state as soon as the user edits it
+    Object.values(fields).forEach(function (field) {
+      field.input.addEventListener('input', function () {
+        if (field.shell.classList.contains('has-error')) clearError(field);
+      });
+    });
+
+    // ---- CoinGecko Live Price Feature ----
+    const coinSelector = document.getElementById('coinSelector');
+    const apiStatus = document.getElementById('apiStatus');
+    const apiStatusText = document.getElementById('apiStatusText');
+    const coinEmoji = document.getElementById('coinEmoji');
+
+    const COIN_EMOJIS = {
+      bitcoin:  '₿',
+      ethereum: 'Ξ',
+      solana:   '◎',
+      ripple:   '✕',
+      cardano:  '₳'
+    };
+
+    function setApiStatus(state, message) {
+      apiStatus.className = 'api-status status-' + state;
+      apiStatusText.textContent = message;
+    }
+
+    function flashBuyPriceField() {
+      const shell = fields.buyPrice.shell;
+      shell.style.animation = 'none';
+      shell.classList.remove('input-shell');
+      void shell.offsetWidth;
+      shell.style.transition = 'border-color 0.3s ease, box-shadow 0.3s ease';
+      shell.style.borderColor = '#00D4AA99';
+      shell.style.boxShadow = '0 0 0 4px #00D4AA1E';
+      window.setTimeout(function () {
+        shell.style.borderColor = '';
+        shell.style.boxShadow = '';
+        shell.classList.add('input-shell');
+        shell.style.transition = '';
+      }, 1400);
+    }
+
+    coinSelector.addEventListener('change', async function () {
+      const coinId = this.value;
+
+      if (!coinId) {
+        coinEmoji.textContent = '🪙';
+        setApiStatus('idle', 'Select a coin to fetch price');
+        return;
+      }
+
+      coinEmoji.textContent = COIN_EMOJIS[coinId] || '🪙';
+      setApiStatus('fetching', 'Fetching Price…');
+
+      // Clear any previous error on buy price field
+      clearError(fields.buyPrice);
+
+      try {
+        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + coinId + '&vs_currencies=usd';
+        const response = await fetch(url);
+
+        if (!response.ok) throw new Error('API error ' + response.status);
+
+        const data = await response.json();
+        const price = data[coinId] && data[coinId].usd;
+
+        if (!price) throw new Error('Price not found');
+
+        fields.buyPrice.input.value = price.toFixed(price >= 1 ? 2 : 6);
+        flashBuyPriceField();
+        setApiStatus('success', 'Price Updated Live ✓');
+
+        // Revert status label after 4 seconds
+        window.setTimeout(function () {
+          setApiStatus('idle', COIN_EMOJIS[coinId] + ' Live price loaded');
+        }, 4000);
+
+      } catch (err) {
+        console.error('CoinGecko fetch error:', err);
+        setApiStatus('error', 'Fetch failed — enter manually');
+        window.setTimeout(function () {
+          setApiStatus('idle', 'Select a coin to fetch price');
+        }, 4000);
+      }
+    });
+
+    // ---- PDF Report Generator ----
+    const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+    const pdfLabel = downloadPdfBtn.querySelector('.pdf-label');
+
+    const COIN_NAMES = {
+      bitcoin:  'Bitcoin (BTC)',
+      ethereum: 'Ethereum (ETH)',
+      solana:   'Solana (SOL)',
+      ripple:   'Ripple (XRP)',
+      cardano:  'Cardano (ADA)',
+      '':       'Custom / Manual Entry'
+    };
+
+    function setPdfLoading(isLoading) {
+      downloadPdfBtn.disabled = isLoading;
+      downloadPdfBtn.classList.toggle('is-generating', isLoading);
+      pdfLabel.textContent = isLoading ? 'Generating PDF…' : 'Download PDF Report';
+    }
+
+    downloadPdfBtn.addEventListener('click', function () {
+      if (!lastResult) {
+        // Pulse the calculate button to guide the user
+        const btn = document.getElementById('calculateBtn');
+        btn.classList.remove('shake');
+        void btn.offsetWidth;
+        btn.classList.add('shake');
+        pdfLabel.textContent = 'Run a calculation first';
+        window.setTimeout(function () { pdfLabel.textContent = 'Download PDF Report'; }, 2200);
+        return;
+      }
+
+      setPdfLoading(true);
+
+      window.setTimeout(function () {
+        try {
+          generatePDF(lastResult);
+        } catch (e) {
+          console.error('PDF generation failed:', e);
+          pdfLabel.textContent = 'PDF failed — try again';
+          window.setTimeout(function () { pdfLabel.textContent = 'Download PDF Report'; }, 2500);
+        } finally {
+          setPdfLoading(false);
+        }
+      }, 60); // let spinner render first
+    });
+
+    function generatePDF(result) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+      const PW = doc.internal.pageSize.getWidth();   // 595.28
+      const PH = doc.internal.pageSize.getHeight();  // 841.89
+
+      // ── Colour palette (RGB arrays) ──
+      const C = {
+        bg:        [10,  13,  19],
+        surface:   [18,  22,  31],
+        surfaceHi: [26,  31,  44],
+        border:    [35,  41,  54],
+        amber:     [240, 185, 11],
+        teal:      [0,   212, 170],
+        red:       [255, 92,  92],
+        textMain:  [232, 234, 237],
+        textMuted: [139, 146, 166],
+        white:     [255, 255, 255],
+      };
+
+      // ── helpers ──
+      function setFill(c)   { doc.setFillColor(c[0], c[1], c[2]); }
+      function setDraw(c)   { doc.setDrawColor(c[0], c[1], c[2]); }
+      function setFont(c)   { doc.setTextColor(c[0], c[1], c[2]); }
+      function rect(x, y, w, h, r) {
+        r ? doc.roundedRect(x, y, w, h, r, r, 'F') : doc.rect(x, y, w, h, 'F');
+      }
+
+      const fmt = function (v, signed) { return formatCurrency(v, signed); };
+      const coinId = coinSelector.value || '';
+      const coinName = COIN_NAMES[coinId] || 'Custom / Manual Entry';
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+      const reportId = 'GW-' + now.getFullYear()
+        + String(now.getMonth()+1).padStart(2,'0')
+        + String(now.getDate()).padStart(2,'0')
+        + '-' + Math.floor(Math.random()*9000+1000);
+
+      // ══════════════════════════════════════════
+      //  FULL-PAGE DARK BACKGROUND
+      // ══════════════════════════════════════════
+      setFill(C.bg);
+      doc.rect(0, 0, PW, PH, 'F');
+
+      // ══════════════════════════════════════════
+      //  HEADER BAND  (0 → 110)
+      // ══════════════════════════════════════════
+      setFill(C.surface);
+      doc.rect(0, 0, PW, 110, 'F');
+
+      // amber accent bar at top
+      setFill(C.amber);
+      doc.rect(0, 0, PW, 4, 'F');
+
+      // Logo wordmark: "Gainwise."
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(26);
+      setFont(C.textMain);
+      doc.text('Gainwise', 48, 56);
+      // amber dot
+      setFont(C.amber);
+      doc.text('.', 48 + doc.getTextWidth('Gainwise'), 56);
+
+      // Tagline
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      setFont(C.textMuted);
+      doc.text('Crypto Profit Calculator  |  Financial Report', 48, 72);
+
+      // Report title (right side)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      setFont(C.amber);
+      const titleText = 'PROFIT & TAX REPORT';
+      doc.text(titleText, PW - 48, 52, { align: 'right' });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      setFont(C.textMuted);
+      doc.text('Report ID: ' + reportId, PW - 48, 66, { align: 'right' });
+      doc.text('Generated: ' + dateStr + ' at ' + timeStr, PW - 48, 79, { align: 'right' });
+
+      // thin separator
+      setDraw(C.border);
+      doc.setLineWidth(0.5);
+      doc.line(48, 100, PW - 48, 100);
+
+      // ══════════════════════════════════════════
+      //  METADATA ROW  (110 → 178)
+      // ══════════════════════════════════════════
+      const metaY = 128;
+      const metaItems = [
+        { label: 'ASSET', value: coinName },
+        { label: 'CURRENCY', value: activeCurrency.code },
+        { label: 'TAX RATE', value: (fields.taxRate.input.value.trim() || '0') + '%' },
+        { label: 'STATUS', value: result.isProfit ? 'PROFIT' : 'LOSS' },
+      ];
+      const colW = (PW - 96) / metaItems.length;
+
+      metaItems.forEach(function (item, i) {
+        const x = 48 + i * colW;
+        const isLast = i === metaItems.length - 1;
+
+        // label
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        setFont(C.textMuted);
+        doc.text(item.label, x, metaY - 14);
+
+        // value
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        if (item.label === 'STATUS') {
+          setFont(result.isProfit ? C.teal : C.red);
+        } else {
+          setFont(C.textMain);
+        }
+        doc.text(item.value, x, metaY);
+
+        // vertical divider (skip after last)
+        if (!isLast) {
+          setDraw(C.border);
+          doc.setLineWidth(0.5);
+          doc.line(x + colW - 8, metaY - 22, x + colW - 8, metaY + 8);
+        }
+      });
+
+      // separator below meta
+      setDraw(C.border);
+      doc.line(48, metaY + 18, PW - 48, metaY + 18);
+
+      // ══════════════════════════════════════════
+      //  SECTION TITLE
+      // ══════════════════════════════════════════
+      let y = metaY + 46;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setFont(C.teal);
+      doc.text('CALCULATION BREAKDOWN', 48, y);
+
+      // teal underline
+      setFill(C.teal);
+      doc.rect(48, y + 4, 118, 1.5, 'F');
+
+      y += 22;
+
+      // ══════════════════════════════════════════
+      //  BREAKDOWN ROWS  (label / value pairs)
+      // ══════════════════════════════════════════
+      const rowH   = 46;
+      const rowGap = 10;
+      const rows = [
+        {
+          label:  'Total Investment',
+          sub:    'Capital deployed in this trade',
+          value:  fmt(result.investment, false),
+          color:  C.textMuted,
+          accent: C.textMuted,
+        },
+        {
+          label:  result.isProfit ? 'Gross Profit' : 'Gross Loss',
+          sub:    'Revenue minus initial investment',
+          value:  fmt(result.grossProfit, true),
+          color:  result.isProfit ? C.teal : C.red,
+          accent: result.isProfit ? C.teal : C.red,
+        },
+        {
+          label:  'Tax Owed',
+          sub:    'Estimated capital gains tax',
+          value:  fmt(result.taxOwed, false),
+          color:  C.amber,
+          accent: C.amber,
+        },
+      ];
+
+      rows.forEach(function (row) {
+        // row card background
+        setFill(C.surface);
+        rect(48, y, PW - 96, rowH, 5);
+
+        // left accent bar
+        setFill(row.accent);
+        rect(48, y, 3, rowH, 2);
+
+        // label
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        setFont(C.textMain);
+        doc.text(row.label, 64, y + 17);
+
+        // sub-label
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        setFont(C.textMuted);
+        doc.text(row.sub, 64, y + 31);
+
+        // value (right-aligned)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        setFont(row.color);
+        doc.text(row.value, PW - 60, y + 20, { align: 'right' });
+
+        y += rowH + rowGap;
+      });
+
+      y += 4;
+
+      // ══════════════════════════════════════════
+      //  NET PROFIT HERO BANNER
+      // ══════════════════════════════════════════
+      const bannerH = 72;
+      const bannerColor = result.isProfit ? C.teal : C.red;
+      const bannerBg   = result.isProfit ? [0, 30, 24]  : [30, 10, 10];
+
+      setFill(bannerBg);
+      rect(48, y, PW - 96, bannerH, 8);
+
+      // left thick accent
+      setFill(bannerColor);
+      rect(48, y, 5, bannerH, 4);
+
+      // "NET PROFIT AFTER TAX" label
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setFont(C.textMuted);
+      doc.text('NET PROFIT AFTER TAX', 68, y + 20);
+
+      // Net value
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      setFont(bannerColor);
+      doc.text(fmt(result.netProfit, true), 68, y + 50);
+
+      // ROI badge (right)
+      const roiSign  = result.roi >= 0 ? '+' : '-';
+      const roiText  = roiSign + Math.abs(result.roi).toFixed(2) + '% ROI';
+      const badgePad = 12;
+      const badgeW   = doc.getTextWidth(roiText) + badgePad * 2;
+      const badgeH   = 22;
+      const badgeX   = PW - 60 - badgeW;
+      const badgeY   = y + (bannerH - badgeH) / 2;
+
+      setFill(result.isProfit ? [0, 50, 40] : [50, 10, 10]);
+      rect(badgeX, badgeY, badgeW, badgeH, 11);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      setFont(bannerColor);
+      doc.text(roiText, badgeX + badgePad, badgeY + 14.5);
+
+      y += bannerH + 32;
+
+      // ══════════════════════════════════════════
+      //  INPUT SUMMARY TABLE
+      // ══════════════════════════════════════════
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      setFont(C.teal);
+      doc.text('INPUT PARAMETERS', 48, y);
+      setFill(C.teal);
+      doc.rect(48, y + 4, 90, 1.5, 'F');
+
+      y += 20;
+
+      const params = [
+        ['Buy Price',    fmt(parseFloat(fields.buyPrice.input.value), false)],
+        ['Sell Price',   fmt(parseFloat(fields.sellPrice.input.value), false)],
+        ['Tax Rate',     (fields.taxRate.input.value.trim() || '0') + '%'],
+        ['Coin / Asset', coinName],
+      ];
+
+      const tableColX = [48, 200, PW / 2, PW / 2 + 150];
+
+      params.forEach(function (pair, i) {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const cx  = col === 0 ? 48 : PW / 2 + 4;
+        const cy  = y + row * 34;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        setFont(C.textMuted);
+        doc.text(pair[0].toUpperCase(), cx, cy);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        setFont(C.textMain);
+        doc.text(pair[1], cx, cy + 14);
+
+        // light separator line
+        if (row === 0) {
+          setDraw(C.border);
+          doc.setLineWidth(0.4);
+          doc.line(cx, cy + 20, cx + (PW / 2 - 56), cy + 20);
+        }
+      });
+
+      y += 78;
+
+      // ══════════════════════════════════════════
+      //  FOOTER
+      // ══════════════════════════════════════════
+      const footerY = PH - 56;
+
+      // top rule
+      setDraw(C.border);
+      doc.setLineWidth(0.5);
+      doc.line(48, footerY, PW - 48, footerY);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      setFont(C.textMuted);
+      doc.text(
+        'This report is generated by Gainwise. and is for informational purposes only. It does not constitute financial, tax, or investment advice.',
+        PW / 2, footerY + 13, { align: 'center', maxWidth: PW - 96 }
+      );
+      doc.text(
+        'Always consult a qualified financial advisor before making investment decisions.  |  gainwise.app',
+        PW / 2, footerY + 26, { align: 'center' }
+      );
+
+      // amber footer dot
+      setFont(C.amber);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.text('Gainwise.', 48, footerY + 14);
+
+      // page number
+      setFont(C.textMuted);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text('Page 1 of 1', PW - 48, footerY + 14, { align: 'right' });
+
+      // ── Save ──
+      const filename = 'Gainwise-Report-' + reportId + '.pdf';
+      doc.save(filename);
+    }
+
+  })();
+  </script>
+
+</body>
+</html>
