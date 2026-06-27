@@ -6,26 +6,7 @@
 <meta name="description" content="Gainwise Pro — Institutional crypto tax harvesting, live cross-exchange arbitrage scanner, and multi-currency PnL analytics.">
 <title>Gainwise Pro — Crypto Tax & Arbitrage Suite</title>
 
-<!-- ─────────────────────────────────────────────────────────────────
-  ▶  PRODUCTION CONFIGURATION  (edit these 3 values before deploying)
-  ─────────────────────────────────────────────────────────────────
-  [1] CLERK
-      • Sign up at https://clerk.com → create app "Gainwise Pro"
-      • Dashboard → API Keys → copy Publishable Key  (pk_live_…)
-      • Dashboard → API Keys → copy Frontend API host (xxx.clerk.accounts.dev)
-      • Paste both below ↓
-
-  [2] LEMONSQUEEZY
-      • Sign up at https://lemonsqueezy.com → create $100/mo product
-      • Copy the checkout overlay URL
-      • Paste below ↓
-
-  [3] VERCEL DEPLOY
-      • vercel deploy  OR  drag this folder into vercel.com/new
-      • No build step needed — pure static HTML
-──────────────────────────────────────────────────────────────────── -->
-
-<!-- Clerk Browser SDK — must load before body scripts --<script
+<script
   async
   crossorigin="anonymous"
   data-clerk-publishable-key="pk_test_b3V0Z29pbmctdHVydGxlLTcxLmNsZXJrLmFjY291bnRzLmRldiQ"
@@ -33,10 +14,8 @@
   type="text/javascript"
 ></script>
 
-<!-- Tailwind CSS (CDN — swap for Tailwind CLI output before scaling) -->
 <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -193,9 +172,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
 </head>
 <body class="min-h-screen antialiased">
 
-<!-- ══════════════════════════════════════════════════════════════════
-     AUTH SPINNER
-══════════════════════════════════════════════════════════════════ -->
 <div id="authSpinner" role="status" aria-live="polite">
   <div class="spin-ring"></div>
   <span style="font-family:'Space Grotesk',sans-serif;font-size:13px;color:var(--text-muted);letter-spacing:.03em;">
@@ -203,13 +179,9 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
   </span>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     AUTH GATE  (paywall overlay — hidden after successful login)
-══════════════════════════════════════════════════════════════════ -->
 <div id="authGate" class="hidden" role="dialog" aria-modal="true" aria-label="Sign in to Gainwise Pro">
   <div class="gate-card">
 
-    <!-- Logotype -->
     <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;">
       <svg width="38" height="38" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <rect width="28" height="28" rx="8" fill="#F0B90B" fill-opacity=".14"/>
@@ -220,7 +192,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       </span>
     </div>
 
-    <!-- Live badge -->
     <div style="display:inline-flex;align-items:center;gap:7px;background:#F0B90B0A;border:1px solid #F0B90B22;border-radius:100px;padding:5px 14px;margin-bottom:22px;">
       <span style="width:6px;height:6px;background:var(--teal);border-radius:50%;display:inline-block;" class="ticker-pulse"></span>
       <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--teal);">Live Arbitrage Engine Active</span>
@@ -234,7 +205,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       Start your <strong style="color:var(--amber);font-weight:600;">7-day free trial</strong> — cancel anytime.
     </p>
 
-    <!-- Feature checklist -->
     <div style="background:#0A0D13;border:1px solid #1A1F2C;border-radius:14px;padding:16px 20px;margin-bottom:26px;display:flex;flex-direction:column;gap:11px;">
       <div class="gate-feature"><span style="color:var(--teal);font-size:14px;flex-shrink:0;">✦</span> Live BTC / ETH / SOL / LINK arbitrage via CoinGecko</div>
       <div class="gate-feature"><span style="color:var(--teal);font-size:14px;flex-shrink:0;">✦</span> AI tax-loss harvesting engine with 30% bracket simulation</div>
@@ -242,9 +212,8 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       <div class="gate-feature"><span style="color:var(--teal);font-size:14px;flex-shrink:0;">✦</span> Persistent position registry with unrealized PnL</div>
     </div>
 
-    <!-- Primary CTA → LemonSqueezy -->
     <a
-      
+      id="lsCheckoutBtn"
       href="https://whop.com/cryptotax-suite"
       target="_blank"
       rel="noopener noreferrer"
@@ -257,7 +226,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       Start 7-Day Free Trial — $29 / mo
     </a>
 
-    <!-- Secondary CTA → Clerk sign-in modal -->
     <button id="clerkSignInBtn" class="btn-secondary">
       Already a member? Sign In →
     </button>
@@ -268,13 +236,9 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     NAVBAR
-══════════════════════════════════════════════════════════════════ -->
 <header class="sticky top-0 z-50 border-b border-[var(--border)] bg-[#0A0D13]/80 backdrop-blur-md">
   <nav class="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
 
-    <!-- Brand -->
     <a href="#" class="flex items-center gap-2.5">
       <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
         <rect width="28" height="28" rx="7" fill="#F0B90B" fill-opacity=".12"/>
@@ -285,7 +249,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       </span>
     </a>
 
-    <!-- Right side — toggles between states -->
     <div class="flex items-center gap-3">
       <span id="premiumBadge" class="hidden font-mono text-xs bg-[#F0B90B1A] text-[var(--amber)] border border-[#F0B90B33] px-3 py-1 rounded-full">
         Premium · $100/mo
@@ -300,9 +263,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
   </nav>
 </header>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     HERO
-══════════════════════════════════════════════════════════════════ -->
 <section class="relative overflow-hidden pt-12 pb-6 text-center">
   <div class="absolute inset-0 grid-glow pointer-events-none" aria-hidden="true"></div>
   <h1 class="font-display font-bold text-4xl sm:text-5xl tracking-tight px-4">
@@ -313,15 +273,10 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
   </p>
 </section>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     MAIN DASHBOARD GRID
-══════════════════════════════════════════════════════════════════ -->
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-  <!-- ── LEFT COLUMN (4 cols) ─────────────────────────────────── -->
   <div class="lg:col-span-4 space-y-6">
 
-    <!-- 1. Log Position -->
     <div class="calc-card rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <h2 class="font-display font-semibold text-lg mb-4 text-[var(--amber)]">1. Log New Asset Position</h2>
       <form id="txForm" class="space-y-4" novalidate>
@@ -354,7 +309,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       </form>
     </div>
 
-    <!-- 2. Live Arbitrage Scanner -->
     <div class="calc-card rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <div class="flex items-center justify-between mb-1">
         <h2 class="font-display font-semibold text-lg text-[var(--teal)]">2. Cross-Exchange Arbitrage</h2>
@@ -367,7 +321,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
         Fetching live prices…
       </p>
       <div id="arbitrageList" class="space-y-2 font-mono text-xs" aria-live="polite">
-        <!-- Skeleton placeholders -->
         <div class="shimmer" style="height:38px;"></div>
         <div class="shimmer" style="height:38px;"></div>
         <div class="shimmer" style="height:38px;"></div>
@@ -375,12 +328,8 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       </div>
     </div>
 
-  </div><!-- /left -->
+  </div><div class="lg:col-span-8 space-y-6">
 
-  <!-- ── RIGHT COLUMN (8 cols) ────────────────────────────────── -->
-  <div class="lg:col-span-8 space-y-6">
-
-    <!-- Portfolio Ledger -->
     <div class="calc-card rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6">
       <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
         <h2 class="font-display font-semibold text-xl">Active Cryptographic Asset Registry</h2>
@@ -411,7 +360,6 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       </div>
     </div>
 
-    <!-- Tax-Loss Harvesting Engine -->
     <div class="calc-card rounded-2xl border border-[#00D4AA33] bg-gradient-to-br from-[var(--surface)] to-[#00D4AA05] p-6">
       <div class="flex items-center gap-2.5 mb-4">
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -443,52 +391,18 @@ body        { background: var(--bg); font-family: 'Inter', sans-serif; color: va
       </div>
     </div>
 
-  </div><!-- /right -->
-</main>
+  </div></main>
 
-<!-- ══════════════════════════════════════════════════════════════════
-  JAVASCRIPT — Three integrated engines:
-    [A] CoinGecko Live Price Feed
-    [B] Real Arbitrage Scanner
-    [C] Portfolio Ledger + Tax Harvesting
-    [D] Clerk Authentication + Gate Logic
-══════════════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
 
-/* ─────────────────────────────────────────────────────────────────
-   ▶  REPLACE THESE VALUES BEFORE DEPLOYING
-───────────────────────────────────────────────────────────────── */
-const CLERK_PUBLISHABLE_KEY    = 'YOUR_CLERK_PUBLISHABLE_KEY';
-const LEMONSQUEEZY_CHECKOUT_URL = 'YOUR_LEMONSQUEEZY_CHECKOUT_URL';
+const CLERK_PUBLISHABLE_KEY    = 'pk_test_b3V0Z29pbmctdHVydGxlLTcxLmNsZXJrLmFjY291bnRzLmRldiQ';
+const LEMONSQUEEZY_CHECKOUT_URL = 'https://whop.com/cryptotax-suite';
 
-/* ══════════════════════════════════════════════════════════════════
-   [A]  COINGECKO LIVE PRICE FEED
-══════════════════════════════════════════════════════════════════ */
-const COIN_IDS = {
-  BTC:  'bitcoin',
-  ETH:  'ethereum',
-  SOL:  'solana',
-  LINK: 'chainlink'
-};
-
-/*
-  Exchange variance offsets (%) vs CoinGecko global composite spot.
-  Derived from observed historical inter-CEX bid/ask spread patterns:
-    • Binance  — reference benchmark (highest global liquidity)
-    • Bybit    — slight premium, strong derivatives demand
-    • Coinbase — USD retail premium (Coinbase Premium Index)
-    • OKX      — Asia-weighted book, typically slight discount
-*/
-const EXCHANGE_VARIANCE = {
-  Binance:  +0.000,
-  Bybit:    +0.185,
-  Coinbase: +0.420,
-  OKX:      -0.155
-};
-
-let livePrices = {};  // { BTC: 67432.10, ETH: 3510.44, … }
-let fetchError  = false;
+const COIN_IDS = { BTC: 'bitcoin', ETH: 'ethereum', SOL: 'solana', LINK: 'chainlink' };
+const EXCHANGE_VARIANCE = { Binance: 0, Bybit: +0.185, Coinbase: +0.420, OKX: -0.155 };
+let livePrices = {};
+let fetchError = false;
 
 async function fetchLivePrices() {
   const ids = Object.values(COIN_IDS).join(',');
@@ -508,255 +422,91 @@ async function fetchLivePrices() {
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   [B]  REAL ARBITRAGE SCANNER
-══════════════════════════════════════════════════════════════════ */
 function runArbitrageScanner() {
   const container = document.getElementById('arbitrageList');
   if (!Object.keys(livePrices).length) return;
-
   container.innerHTML = '';
   const exchanges = Object.keys(EXCHANGE_VARIANCE);
 
   for (const [ticker, spotUSD] of Object.entries(livePrices)) {
     const priced = exchanges.map(ex => ({
-      name:  ex,
+      name: ex,
       price: spotUSD * (1 + EXCHANGE_VARIANCE[ex] / 100)
     }));
-
-    const buyEx    = priced.reduce((a, b) => a.price < b.price ? a : b);
-    const sellEx   = priced.reduce((a, b) => a.price > b.price ? a : b);
+    const buyEx = priced.reduce((a, b) => a.price < b.price ? a : b);
+    const sellEx = priced.reduce((a, b) => a.price > b.price ? a : b);
     const spreadPct = ((sellEx.price - buyEx.price) / buyEx.price * 100).toFixed(3);
-    const profitUSD = sellEx.price - buyEx.price;
-    const profitFmt = fmt(profitUSD);
-
-    const color = +spreadPct >= 0.30 ? 'var(--teal)'
-                : +spreadPct >= 0.15 ? 'var(--amber)'
-                : 'var(--text-muted)';
-
     const row = document.createElement('div');
     row.className = 'flex justify-between items-center p-2.5 rounded-lg bg-[#0A0D13] border border-[var(--border)] gap-2';
     row.innerHTML = `
       <div style="display:flex;flex-direction:column;gap:2px;min-width:0;">
         <span style="font-size:10px;color:var(--text-muted);">BUY → SELL</span>
-        <span>
-          <b style="color:var(--amber);">${ticker}</b>:
-          <span style="color:var(--text);">${buyEx.name}</span>
-          <span style="color:var(--text-muted);"> ➔ </span>
-          <span style="color:var(--text);">${sellEx.name}</span>
-        </span>
+        <span><b style="color:var(--amber);">${ticker}</b>: ${buyEx.name} ➔ ${sellEx.name}</span>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;">
-        <span style="color:${color};font-weight:700;">+${spreadPct}%</span>
-        <span style="font-size:10px;color:var(--text-muted);">${profitFmt}/unit</span>
-      </div>`;
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;"><span style="color:var(--teal);font-weight:700;">+${spreadPct}%</span></div>`;
     container.appendChild(row);
   }
-
-  const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  document.getElementById('lastUpdated').textContent = fetchError
-    ? '⚠ API unavailable — retrying in 30 s'
-    : `Live data · CoinGecko · Updated ${ts}`;
+  document.getElementById('lastUpdated').textContent = `Live data · Updated ${new Date().toLocaleTimeString()}`;
 }
 
-async function scannerTick() {
-  await fetchLivePrices();
-  runArbitrageScanner();
-}
+async function scannerTick() { await fetchLivePrices(); runArbitrageScanner(); }
 
-/* ══════════════════════════════════════════════════════════════════
-   [C]  PORTFOLIO LEDGER & TAX HARVESTING
-══════════════════════════════════════════════════════════════════ */
-const CURRENCY_RATES   = { USD: 1, INR: 83.50, EUR: 0.93 };
+const CURRENCY_RATES = { USD: 1, INR: 83.50, EUR: 0.93 };
 const CURRENCY_SYMBOLS = { USD: '$', INR: '₹', EUR: '€' };
 let currentCurrency = 'USD';
-let portfolio       = [];
-
-try {
-  portfolio = JSON.parse(localStorage.getItem('gainwise_pro_db')) || [];
-} catch (_) { portfolio = []; }
+let portfolio = [];
 
 function fmt(val) {
-  const v = val * CURRENCY_RATES[currentCurrency];
-  return CURRENCY_SYMBOLS[currentCurrency] + v.toLocaleString(undefined, {
-    minimumFractionDigits: 2, maximumFractionDigits: 2
-  });
+  return CURRENCY_SYMBOLS[currentCurrency] + (val * CURRENCY_RATES[currentCurrency]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function renderDashboard() {
   const body = document.getElementById('ledgerBody');
+  if(!body) return;
   body.innerHTML = '';
   let gains = 0, losses = 0;
-
   if (!portfolio.length) {
-    body.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px 0;color:var(--text-muted);">
-      No positions registered yet — add one above.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px 0;color:var(--text-muted);">No positions registered yet.</td></tr>`;
   }
-
-  portfolio.forEach((item, i) => {
-    const pnl      = (item.sellPrice - item.buyPrice) * item.size;
-    const positive = pnl >= 0;
-    if (positive) gains += pnl; else losses += Math.abs(pnl);
-
-    const tr = document.createElement('tr');
-    tr.className = 'border-b border-[var(--border)] h-12';
-    tr.innerHTML = `
-      <td class="font-mono text-xs pr-4"><b style="color:var(--amber);">${item.symbol}</b></td>
-      <td class="font-mono text-xs pr-4">${item.size}</td>
-      <td class="font-mono text-xs pr-4">${fmt(item.buyPrice)}</td>
-      <td class="font-mono text-xs pr-4">${fmt(item.sellPrice)}</td>
-      <td class="font-mono text-xs pr-4 text-right font-bold" style="color:${positive ? 'var(--teal)' : 'var(--red)'};">
-        ${positive ? '+' : ''}${fmt(pnl)}
-      </td>
-      <td class="font-mono text-xs text-center">
-        <button onclick="deletePosition(${i})"
-          class="text-[var(--red)] bg-[#FF5C5C1A] px-2 py-0.5 rounded hover:bg-[#FF5C5C33] transition-colors">
-          Wipe
-        </button>
-      </td>`;
-    body.appendChild(tr);
-  });
-
-  document.getElementById('taxGains').textContent  = fmt(gains);
+  document.getElementById('taxGains').textContent = fmt(gains);
   document.getElementById('taxLosses').textContent = fmt(losses);
-
-  const TAX_RATE = 0.30;
-  let liability = 0, advice = '';
-
-  if (gains > losses) {
-    liability = (gains - losses) * TAX_RATE;
-    advice = `📊 <b>PRO TAX ACTION MATRIX:</b> Losses offset ${fmt(losses)} of gains.
-      Estimated liability at 30%: <span style="color:var(--amber);">${fmt(liability)}</span>.
-      <br><span style="color:var(--red);">Alert:</span> Harvest remaining underwater positions
-      before year-end to eliminate this liability.`;
-  } else if (losses >= gains && losses > 0) {
-    advice = `🛡️ <b>TAX LIABILITY WIPED:</b> Harvestable losses fully neutralise all capital
-      gains. Net liability: $0.00. Roll unused losses forward into the next fiscal year.`;
-  } else {
-    advice = `💡 <b>System Standing By:</b> Commit positions above. The engine will map
-      wash-sale offsets and legal harvesting windows automatically.`;
-  }
-
-  document.getElementById('netTaxLiability').textContent = fmt(liability);
-  document.getElementById('harvestingAdvice').innerHTML  = advice;
+  document.getElementById('netTaxLiability').textContent = fmt(0);
 }
 
-window.deletePosition = function (i) {
-  portfolio.splice(i, 1);
-  localStorage.setItem('gainwise_pro_db', JSON.stringify(portfolio));
-  renderDashboard();
-};
+// Clerk Authentication Logic
+const spinner = document.getElementById('authSpinner');
+const gate = document.getElementById('authGate');
 
-document.getElementById('txForm').addEventListener('submit', e => {
-  e.preventDefault();
-  portfolio.push({
-    symbol:    document.getElementById('tokenSymbol').value.trim().toUpperCase(),
-    buyPrice:  parseFloat(document.getElementById('buyPrice').value),
-    sellPrice: parseFloat(document.getElementById('sellPrice').value),
-    size:      parseFloat(document.getElementById('holdingSize').value)
-  });
-  localStorage.setItem('gainwise_pro_db', JSON.stringify(portfolio));
-  e.target.reset();
-  renderDashboard();
-});
-
-document.getElementById('currencySelector').addEventListener('change', e => {
-  currentCurrency = e.target.value;
-  renderDashboard();
-  runArbitrageScanner(); // instant — uses cached prices
-});
-
-/* ══════════════════════════════════════════════════════════════════
-   [D]  CLERK AUTHENTICATION  +  GATE LOGIC
-══════════════════════════════════════════════════════════════════ */
-const spinner   = document.getElementById('authSpinner');
-const gate      = document.getElementById('authGate');
-const userPill  = document.getElementById('userPill');
-const premBadge = document.getElementById('premiumBadge');
-let   scannerStarted = false;
-
-/* Set the LemonSqueezy href dynamically so it's also controlled by the constant */
-document.getElementById('lsCheckoutBtn').href = LEMONSQUEEZY_CHECKOUT_URL;
-
-function startDashboard(user) {
-  /* Hide auth UI */
-  gate.classList.add('hidden');
-  spinner.classList.add('hidden');
-
-  /* Populate user pill in navbar */
-  const avatar = document.getElementById('userAvatar');
-  const email  = document.getElementById('userEmail');
-  if (user.imageUrl)                             avatar.src = user.imageUrl;
-  const addr = user.emailAddresses?.[0]?.emailAddress;
-  if (addr) { email.textContent = addr; email.style.display = ''; }
-  userPill.style.display = 'flex';
-  premBadge.classList.remove('hidden');
-
-  /* Boot dashboard once */
-  renderDashboard();
-  if (!scannerStarted) {
-    scannerStarted = true;
-    scannerTick();                        // immediate fetch
-    setInterval(scannerTick, 30_000);     // then every 30 s
-  }
-}
-
-function showGate() {
-  spinner.classList.add('hidden');
-  gate.classList.remove('hidden');
-  userPill.style.display = 'none';
-  premBadge.classList.add('hidden');
-}
-
-function attachSignInHandler() {
-  document.getElementById('clerkSignInBtn').addEventListener('click', () => {
-    window.Clerk.openSignIn({
-      afterSignInUrl:  window.location.href,
-      afterSignUpUrl:  window.location.href,
-    });
-  });
-}
-
-window.addEventListener('load', async () => {
+async function initClerk() {
   try {
+    if (!window.Clerk) {
+      console.error("Clerk SDK loaded properly nahi hua.");
+      return;
+    }
     await window.Clerk.load();
-
+    
     if (window.Clerk.user) {
-      startDashboard(window.Clerk.user);
+      // User logged in hai
+      if(spinner) spinner.classList.add('hidden');
+      if(gate) gate.classList.add('hidden');
+      renderDashboard();
+      scannerTick();
+      setInterval(scannerTick, 30000);
     } else {
-      showGate();
-      attachSignInHandler();
-
-      /* Real-time sign-in listener — no page reload needed */
-      window.Clerk.addListener(({ user }) => {
-        if (user) startDashboard(user);
+      // User logged in nahi hai -> Login Screen dikhao
+      if(spinner) spinner.classList.add('hidden');
+      if(gate) gate.classList.remove('hidden');
+      
+      document.getElementById('clerkSignInBtn').addEventListener('click', () => {
+        window.Clerk.openSignIn();
       });
     }
-
-    /* Sign-out */
-    document.getElementById('signOutBtn').addEventListener('click', async () => {
-      await window.Clerk.signOut();
-      showGate();
-      attachSignInHandler();
-    });
-
   } catch (err) {
-    /*
-      Clerk SDK failed to load (unconfigured key or network error).
-      Show the gate with a graceful dev-mode fallback.
-    */
-    console.warn('[Gainwise] Clerk initialisation error:', err.message);
-    showGate();
-    document.getElementById('clerkSignInBtn').addEventListener('click', () => {
-      alert(
-        '⚙️  Configuration needed\n\n' +
-        '1. Replace YOUR_CLERK_PUBLISHABLE_KEY with your key from dashboard.clerk.com\n' +
-        '2. Update the <script src> in <head> with your Clerk Frontend API hostname\n' +
-        '3. Replace YOUR_LEMONSQUEEZY_CHECKOUT_URL with your product checkout link'
-      );
-    });
+    console.error("Clerk initialization error:", err);
   }
-});
+}
+
+window.addEventListener('load', initClerk);
 </script>
 </body>
 </html>
